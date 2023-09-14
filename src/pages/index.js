@@ -50,7 +50,7 @@ export default function Todo() {
         friendResponse.records.map(async (record) => {
           const data = await record.data.json();
           console.log('the data you are looking for', data)
-          return { did: record.id, alias: data.alias };
+          return { did: data.did, alias: data.alias };
         })
       );
 
@@ -120,8 +120,10 @@ export default function Todo() {
   }
 
   const shareTask = async (taskId, friendDid) => {
+
    // const targetDid = allAliases.find((a) => a.alias === selectedAlias)?.did;
    const task = tasks.find(t => t.id === taskId); 
+   console.log('shareTask', task, friendDid)
    if (!task) {
     console.error('Task not found');
     return;
@@ -142,9 +144,6 @@ export default function Todo() {
       });
       const { status } = await record.send(friendDid);
       console.log(status)
-      if (status !== 'success') {
-        console.error('Failed to send task to friend');
-      }
     }
   };
   
@@ -179,9 +178,12 @@ export default function Todo() {
                     <button onClick={() => deleteTask(task.id)}>Delete</button>
                     <select onChange={(e) => shareTask(task.id, e.target.value)}>
                       <option value="">Share with...</option>
-                      {friends.map((friend, i) => (
-                        <option key={i} value={friend.did}>{friend.alias}</option>
-                      ))}
+                      {friends.map((friend, i) => {
+                        console.log('friend', friend);
+                        return (
+                          <option key={i} value={friend.did}>{friend.alias}</option>
+                        );
+                      })}
                     </select>
                   </div>
                 )}
