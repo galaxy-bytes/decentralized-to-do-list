@@ -61,22 +61,93 @@ export default function Todo() {
     connectToWeb5();
   }, []);
 
-  const addTask = async (event) => {
-    event.preventDefault();
-    // ... (existing code for adding tasks)
-  };
+  async function addTask(event) {
+    event.preventDefault(); // Prevent form from submitting and refreshing the page
+    if (web5Instance && aliceDid && newTask.trim() !== '') {
+      const taskData = {
+        '@context': 'https://schema.org/',
+        '@type': 'Action',
+        name: newTask,
+        completed: false, // Add this line
+      };
 
-  const deleteTask = async (id) => {
-    // ... (existing code for deleting tasks)
-  };
+      const { record } = await web5Instance.dwn.records.create({
+        data: taskData,
+        message: {
+          dataFormat: 'application/json',
+          schema: 'https://schema.org/Action',
+        },
+      });
 
-  const updateTask = async (id) => {
-    // ... (existing code for updating tasks)
-  };
+      // Send the record to the DWN.
+      await record.send(aliceDid);
 
+      setTasks((prevTasks) => [...prevTasks, { id: record.id, text: newTask }]);
+      setNewTask('');
+    }
+  }
+
+
+  async function deleteTask(id) {
+    if (web5Instance && aliceDid) {
+      await web5Instance.dwn.records.delete({
+        from: aliceDid,
+        message: {
+          recordId: id,
+        },
+      });
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    }
+  }
+
+  async function updateTask(id) {
+    if (web5Instance && aliceDid) {
+      const { record } = await web5Instance.dwn.records.read({
+        from: aliceDid,
+        message: {
+          recordId: id,
+        },
+      });
+
+      await record.update({ data: editTaskValue });
+      // Send the updated record to the DWN.
+      await record.send(aliceDid);
+      setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, text: editTaskValue } : task)));
+      setEditTaskId(null);
+      setEditTaskValue('');
+    }
+  }
   const shareTask = async (taskId, friendDid) => {
-    // Code to share the task with friendDid
+    // Find the task by its ID
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) {
+      console.error('Task not found');
+      return;
+    }
+  
+    // Create a new record for the task
+    const taskData = {
+      '@context': 'https://schema.org/',
+      '@type': 'Action',
+      name: task.text,
+      completed: false,
+    };
+  
+    const { record } = await web5Instance.dwn.records.create({
+      data: taskData,
+      message: {
+        dataFormat: 'application/json',
+        schema: 'https://schema.org/Action',
+      },
+    });
+  
+    // Send the record to the friend's DWN
+    const { status } = await record.send(friendDid);
+    if (status !== 'success') {
+      console.error('Failed to send task to friend');
+    }
   };
+  
 
   return (
     <div>
