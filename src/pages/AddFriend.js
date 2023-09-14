@@ -3,32 +3,36 @@ import { Web5 } from '@web5/api';
 export default function AddFriend() {
     const [alias, setAlias] = useState('');
     const [web5Instance, setWeb5Instance] = useState(null);
-    const [aliceDid, setAliceDid] = useState(null);
+    const [did, setDid] = useState(null);
+    const [allAliases, setAllAliases] = useState([]);
   
     useEffect(() => {
       async function connectToWeb5() {
         const { web5, did } = await Web5.connect();
         setWeb5Instance(web5);
-        setAliceDid(did);
+        setDid(did);
       }
       connectToWeb5();
     }, []);
   
     const addFriend = async () => {
-      const friendData = {
+      const aliasData = {
         '@context': 'https://schema.org/',
         '@type': 'Person',
-        alias: alias,
+        alias,
+        did,
       };
       const { record } = await web5Instance.dwn.records.create({
-        data: friendData,
+        data: aliasData,
         message: {
           dataFormat: 'application/json',
           schema: 'https://schema.org/Person',
         },
       });
-      await record.send(aliceDid);
+      await record.send(did);
+      setAllAliases([...allAliases, { alias, did }]);
     };
+
   
     return (
       <div>

@@ -49,6 +49,7 @@ export default function Todo() {
       const friendList = await Promise.all(
         friendResponse.records.map(async (record) => {
           const data = await record.data.json();
+          console.log('the data you are looking for', data)
           return { did: record.id, alias: data.alias };
         })
       );
@@ -117,34 +118,33 @@ export default function Todo() {
       setEditTaskValue('');
     }
   }
+
   const shareTask = async (taskId, friendDid) => {
-    // Find the task by its ID
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) {
-      console.error('Task not found');
-      return;
-    }
-  
-    // Create a new record for the task
-    const taskData = {
-      '@context': 'https://schema.org/',
-      '@type': 'Action',
-      name: task.text,
-      completed: false,
-    };
-  
-    const { record } = await web5Instance.dwn.records.create({
-      data: taskData,
-      message: {
-        dataFormat: 'application/json',
-        schema: 'https://schema.org/Action',
-      },
-    });
-  
-    // Send the record to the friend's DWN
-    const { status } = await record.send(friendDid);
-    if (status !== 'success') {
-      console.error('Failed to send task to friend');
+   // const targetDid = allAliases.find((a) => a.alias === selectedAlias)?.did;
+   const task = tasks.find(t => t.id === taskId); 
+   if (!task) {
+    console.error('Task not found');
+    return;
+  }
+
+   if (friendDid) {
+      const taskData = {
+        '@context': 'https://schema.org/',
+        '@type': 'Action',
+        name: task.text,
+      };
+      const { record } = await web5Instance.dwn.records.create({
+        data: taskData,
+        message: {
+          dataFormat: 'application/json',
+          schema: 'https://schema.org/Action',
+        },
+      });
+      const { status } = await record.send(friendDid);
+      console.log(status)
+      if (status !== 'success') {
+        console.error('Failed to send task to friend');
+      }
     }
   };
   
