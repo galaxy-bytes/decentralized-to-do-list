@@ -154,6 +154,8 @@ export default function Todo() {
         <title>Web5 To Do App</title>
       </Head>
       <h1>To Do</h1>
+      {/* logic for button that copy pastes aliceDid to clipboard */}
+      <button onClick={() => navigator.clipboard.writeText(aliceDid)}>Copy Alice's DID</button>
       {loading ? (
         <p>Loading...</p>
       ) : (
